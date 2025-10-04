@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./community.css";
 
 type CommunityProps = {
@@ -9,6 +9,27 @@ const Community: React.FC<CommunityProps> = ({ className = "" }) => {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string>("");
+  const [confetti, setConfetti] = useState<{left:number,top:number,id:number}[]>([]);
+  const [expandedEvent, setExpandedEvent] = useState<number|null>(null);
+  const statsRef = useRef<HTMLDivElement|null>(null);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const [counts, setCounts] = useState({members:0, projects:0, workshops:0});
+
+  // Carousel
+  const resources = [
+    {title: 'Interactive Sim: Orbital Mechanics', desc: 'Run sims to see how orbits change with velocity and mass.', progress: 78},
+    {title: 'Lesson: Exoplanet Detection', desc: 'Hands-on notebook exploring transit and radial velocity methods.', progress: 92},
+    {title: 'Video Series: Building CubeSats', desc: 'Step-by-step from concept to launch readiness.', progress: 64}
+  ];
+  const [slide, setSlide] = useState(0);
+  const slideRef = useRef<number>(0);
+  useEffect(()=>{ slideRef.current = slide }, [slide]);
+  useEffect(()=>{
+    const t = setInterval(()=>{
+      setSlide(s=> (s+1) % resources.length);
+    }, 4200);
+    return ()=>clearInterval(t);
+  },[]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,10 +51,65 @@ const Community: React.FC<CommunityProps> = ({ className = "" }) => {
       setStatus("success");
       setMessage("Thanks — check your inbox to confirm subscription.");
       setEmail("");
+  // small confetti burst
+  const burst = Array.from({length:20}).map((_,i)=>({left: 20+Math.random()*200, top: 10+Math.random()*40, id: Date.now()+i}));
+  setConfetti(burst);
+  setTimeout(()=>setConfetti([]), 1200);
     } catch (err) {
       setStatus("error");
       setMessage("Network error. Please try again later.");
     }
+  }
+
+  // stats observer: animate counters when visible
+  useEffect(()=>{
+    const el = statsRef.current;
+    if(!el) return;
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach(ent=>{
+        if(ent.isIntersecting){
+          setStatsVisible(true);
+          obs.disconnect();
+        }
+      })
+    },{threshold:0.3});
+    obs.observe(el);
+    return ()=>obs.disconnect();
+  },[]);
+
+  useEffect(()=>{
+    if(!statsVisible) return;
+    let raf = 0;
+    const start = performance.now();
+    const duration = 1100;
+    const targets = {members: 12480, projects: 312, workshops: 86};
+    function step(now:number){
+      const t = Math.min(1, (now-start)/duration);
+      const ease = t<.5? 2*t*t : -1 + (4-2*t)*t; // simple ease
+      setCounts({
+        members: Math.floor(targets.members * ease),
+        projects: Math.floor(targets.projects * ease),
+        workshops: Math.floor(targets.workshops * ease),
+      });
+      if(t < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return ()=> cancelAnimationFrame(raf);
+  },[statsVisible]);
+
+  // small card tilt for resources (CSS variables)
+  function handleTilt(e: React.PointerEvent<HTMLDivElement>){
+    const el = e.currentTarget as HTMLDivElement;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty('--tx', `${x * 10}deg`);
+    el.style.setProperty('--ty', `${-y * 8}deg`);
+  }
+  function resetTilt(e: React.PointerEvent<HTMLDivElement>){
+    const el = e.currentTarget as HTMLDivElement;
+    el.style.setProperty('--tx','0deg');
+    el.style.setProperty('--ty','0deg');
   }
 
   return (
@@ -63,6 +139,11 @@ const Community: React.FC<CommunityProps> = ({ className = "" }) => {
             Curated lesson plans, videos, and interactive simulations for classrooms and
             independent learners. Content spans elementary through higher education.
           </p>
+          <div ref={statsRef} className="stats-row" aria-hidden={false}>
+            <div className="stat"><h4>Community</h4><div className="num">{counts.members.toLocaleString()}</div></div>
+            <div className="stat"><h4>Active Projects</h4><div className="num">{counts.projects}</div></div>
+            <div className="stat"><h4>Workshops</h4><div className="num">{counts.workshops}</div></div>
+          </div>
           <a className="card-link" href="#">Browse resources →</a>
         </article>
 
@@ -85,28 +166,51 @@ const Community: React.FC<CommunityProps> = ({ className = "" }) => {
         </article>
       </div>
 
+      <div className="carousel" aria-roledescription="carousel" aria-label="Featured resources">
+        <div className="slides" style={{transform: `translateX(${ - (slide * 372)}px)`}}>
+          {resources.map((r, idx)=> (
+            <div key={idx} className={`slide`} onPointerMove={handleTilt} onPointerLeave={resetTilt} role="group" aria-roledescription="slide">
+              <h4>{r.title}</h4>
+              <p>{r.desc}</p>
+              <div style={{marginTop:12, display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <svg className="progress-ring" viewBox="0 0 64 64" aria-hidden>
+                  <circle className="ring-bg" cx="32" cy="32" r="26" />
+                  <circle className="ring-fg" cx="32" cy="32" r="26" strokeDasharray={Math.PI*2*26} strokeDashoffset={(1 - (r.progress/100)) * Math.PI*2*26} />
+                </svg>
+                <div style={{color:'rgba(255,255,255,0.9)', fontWeight:700}}>{r.progress}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="events-section" id="events">
         <div className="events-header">
           <h3>Upcoming Events</h3>
           <p className="muted">Workshops, livestreams, and regional meetups.</p>
         </div>
         <ul className="events-list">
-          <li>
-            <time dateTime="2025-10-18">Oct 18, 2025</time>
-            <div className="event-body">
-              <strong>Moon Mapping Workshop</strong>
-              <span className="muted"> • Online • Free</span>
-              <p className="event-desc">Hands-on activity mapping lunar features with real data.</p>
-            </div>
-          </li>
-          <li>
-            <time dateTime="2025-11-03">Nov 3, 2025</time>
-            <div className="event-body">
-              <strong>Student Satellite Showcase</strong>
-              <span className="muted"> • Virtual • Registration required</span>
-              <p className="event-desc">Student teams present CubeSat missions and prototypes.</p>
-            </div>
-          </li>
+          {[{
+            date: '2025-10-18',
+            title: 'Moon Mapping Workshop',
+            badge: 'Online • Free',
+            desc: 'Hands-on activity mapping lunar features with real data.'
+          },{
+            date: '2025-11-03',
+            title: 'Student Satellite Showcase',
+            badge: 'Virtual • Registration required',
+            desc: 'Student teams present CubeSat missions and prototypes.'
+          }].map((ev,i)=> (
+            <li key={i} onClick={()=> setExpandedEvent(expandedEvent===i? null: i)} className={`event-item ${expandedEvent===i? 'open':''}`}>
+              <time dateTime={ev.date}>{new Date(ev.date).toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'})}</time>
+              <div className="event-body">
+                <strong>{ev.title}</strong>
+                <span className="muted"> • {ev.badge}</span>
+                <p className="event-desc">{ev.desc}</p>
+                {expandedEvent===i && <div className="event-extra">More info, links, and resources for this event.</div>}
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -123,6 +227,7 @@ const Community: React.FC<CommunityProps> = ({ className = "" }) => {
           <button className="btn primary" type="submit" disabled={status === "loading"}>{status === "loading" ? "Subscribing…" : "Subscribe"}</button>
         </form>
       </aside>
+      {confetti.map(c=> <span key={c.id} className="confetti" style={{left:c.left, top:c.top}} />)}
     </section>
   );
 };
