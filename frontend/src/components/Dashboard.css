@@ -1,0 +1,10 @@
+@import '../App.css';
+
+/* component-specific tweaks */
+.dashboard .input-section{ max-width:980px; margin: 0 auto; }
+.dashboard .input-section .input-grid{ margin-top:6px; }
+.dashboard .result-section img{ max-height:360px; object-fit:contain; }
+.nav-links a{ color:var(--muted); margin-right:12px; text-decoration:none; }
+.nav-links a:hover{ color:#fff; }
+input, button, .result-section{ transition: all 180ms ease; }
+

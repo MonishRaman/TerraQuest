@@ -1,0 +1,37 @@
+/* Simple styles for the Education & Community page */
+.community-section{
+  max-width:1100px;
+  margin: 22px auto;
+  padding: 20px;
+  color: var(--muted, rgba(255,255,255,0.85));
+}
+.community-hero{ display:flex; gap:20px; align-items:center; justify-content:space-between; }
+.hero-content{ max-width:640px; }
+.hero-content h2{ color:#fff; margin:0 0 8px 0; }
+.lead{ color:rgba(255,255,255,0.8); margin:0 0 12px 0; }
+.hero-cta{ display:flex; gap:10px; margin-top:12px; }
+.btn{ padding:10px 14px; border-radius:8px; text-decoration:none; font-weight:600; }
+.btn.primary{ background: linear-gradient(90deg,#4f46e5,#06b6d4); color:#fff; }
+.btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); }
+.hero-visual{ width:220px; height:140px; display:flex; align-items:center; justify-content:center; }
+.rocket{ width:84px; height:84px; background:linear-gradient(180deg,#fff,#e6e6ff); border-radius:50%; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+.community-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:18px; margin-top:20px; }
+.card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:16px; border-radius:12px; box-shadow: 0 8px 28px rgba(2,6,23,0.5); }
+.card h3{ margin-top:0; color:#fff; }
+.card-link{ display:inline-block; margin-top:12px; color:#c7d2fe; text-decoration:none; }
+.events-section{ margin-top:20px; }
+.events-header h3{ margin:0; color:#fff; }
+.events-list{ list-style:none; padding:0; margin:12px 0 0 0; }
+.events-list li{ display:flex; gap:12px; padding:12px 0; border-bottom:1px dashed rgba(255,255,255,0.03); }
+.event-body strong{ display:block; color:#fff; }
+.muted{ color:rgba(255,255,255,0.65); }
+.newsletter{ margin-top:22px; padding:16px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); box-shadow: 0 8px 28px rgba(2,6,23,0.45); }
+.newsletter-form{ display:flex; gap:8px; margin-top:8px; }
+.newsletter-form input{ flex:1; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:#fff; }
+.newsletter-form button{ padding:8px 12px; border-radius:8px; background:linear-gradient(90deg,#4f46e5,#06b6d4); color:#fff; border:none; }
+.sr-only{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+@media (max-width:900px){
+  .community-hero{ flex-direction:column; align-items:flex-start; }
+  .hero-visual{ width:100%; display:block; height:120px; }
+}
