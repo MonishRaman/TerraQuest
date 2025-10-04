@@ -1,262 +1,226 @@
-# TerraQuest - Exploring New Worlds with AI-Powered Exoplanet Discovery
 
-This repository contains TerraQuest, a small research-focused toolkit and demo web application for exploring exoplanet properties, predicting habitability, classifying planet types, and visualizing transit events.
+# TerraQuest — Exploring New Worlds with AI
 
-The project includes:
-- frontend: React (TypeScript) single-page application with routes, a Dashboard for advanced analysis, and informational pages.
-- backend: Flask API that provides endpoints for habitability prediction, planet classification, transit visualization, and combined analysis.
+TerraQuest is a compact research/demo web application for exploring exoplanet properties, predicting habitability, classifying planet types, and visualizing transit events. It was built as a hackathon project and includes:
 
-This README explains how to run the project locally, where things live, and quick troubleshooting tips.
+- Frontend: React + TypeScript single-page app (in `frontend/`).
+- Backend: Flask API providing analysis endpoints (in `backend/`).
+- Models: small, self-contained model code under `backend/models` for habitability prediction, planet classification, and transit light-curve visualization.
 
-## Quick links
-- Frontend entry: `frontend/src/index.tsx`
-- Backend entry: `backend/app.py`
+This README documents how to run the project locally (PowerShell examples for Windows), outlines the API, and provides developer notes and next steps.
 
-## Prerequisites
-- Node.js (16+ recommended) and npm
-- Python 3.10+ and pip
-
-Optional (recommended): create virtual environments for the backend with `venv` or `conda`.
-
-## Local setup (backend)
-
-1. Open a terminal and navigate to the backend folder:
-
-```powershell
-cd backend
-```
-
-2. (Recommended) Create and activate a virtual environment:
-
-Windows (PowerShell):
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-3. Install dependencies:
-
-```powershell
-pip install -r requirements.txt
-```
-
-4. Run the API server:
-
-```powershell
-python app.py
-```
-
-The API will start on http://localhost:5000 by default. The root route returns a small JSON describing available endpoints.
-
-Useful backend files:
-- `backend/api/routes.py` — Flask Blueprint exposing `/api/*` endpoints used by the frontend.
-- `backend/models/*` — core model code for habitability prediction, classification, and transit visualization.
-
---------------------------------
-
-## Local setup (frontend)
-
-1. Open a separate terminal and navigate to the frontend folder:
-
-```powershell
-cd frontend
-```
-
-2. Install node dependencies (if you changed package.json recently):
-
-```powershell
-# If you run into peer dependency conflicts with older CRA, use the legacy flag
-npm install --legacy-peer-deps
-```
-
-3. Start the development server:
-
-```powershell
-npm start
-```
-
-This launches the app (usually on http://localhost:3000). If port 3000 is busy the dev server will offer an alternate port.
-
-Build for production:
-
-```powershell
-npm run build
-```
-
-Notes:
-- The frontend uses `react-router-dom` for client-side routing. The top nav and left sidebar provide navigation to the Dashboard and informational pages.
-- To display the app logo, place the provided logo image at `frontend/public/logo.png`.
-
---------------------------------
-
-## Running the full stack
-1. Start the backend first (port 5000).
-2. Start the frontend dev server (port 3000 or 3001 if the default is busy).
-3. The frontend will call the backend API routes (prefixed with `/api`) — ensure CORS is enabled (backend uses `flask-cors`).
-
-## Project structure (high-level)
-# TerraQuest — Exoplanet research toolkit & demo
-
-TerraQuest is a compact research-focused toolkit and demo web application for exploring exoplanet properties, predicting habitability, classifying planet types, and visualizing transit events. It was created as a hackathon/demo project and includes a React + TypeScript frontend and a Flask backend with model code in `backend/models`.
-
-This README gives step-by-step setup and run instructions (Windows PowerShell examples), where to find key files, and quick troubleshooting tips.
-
-## Quick links
+## Repository quick links
 
 - Frontend entry: `frontend/src/index.tsx`
 - Frontend API client: `frontend/src/services/api.ts`
 - Backend entry: `backend/app.py`
 - Backend routes: `backend/api/routes.py`
+- Backend models: `backend/models/*.py`
 
-## Requirements
+## Project structure
 
-- Node.js 16+ and npm (or pnpm/yarn)
+Below is a high-level view of the repository layout and the purpose of important files and folders:
+
+```
+LICENSE                          # repository license
+package.json                     # project-level launcher (start_app.js)
+start_app.ps1 / start_app.bat    # convenience scripts to start backend + frontend
+start_app.js                     # Node script to spawn backend/frontend
+
+backend/                         # Flask API and models
+  app.py                         # Flask application factory and entrypoint
+  config.py                      # configuration helpers for Flask
+  requirements.txt               # Python dependencies (pip)
+  api/
+    routes.py                    # Blueprint registering /api endpoints
+  models/
+    habitability_predictor.py    # habitability model (RF, synthetic data)
+    planet_classifier.py         # planet classification model (RF)
+    transit_visualizer.py        # transit light-curve generation & plotting
+
+frontend/                        # React + TypeScript single-page app
+  package.json                   # frontend dependencies & scripts
+  public/
+    index.html                   # HTML shell for the SPA
+    logo.png                     # app logo used by the frontend
+  src/
+    index.tsx                    # frontend entry
+    App.tsx                      # top-level app & routing
+    services/
+      api.ts                     # client wrapper for backend API
+    components/                   # React components and pages (Dashboard, Home, About...)
+  build/                          # production build output (if generated)
+
+README.md                        # this file
+```
+
+This tree focuses on the files you'll most likely edit during development. If you'd like a more detailed map (tests, CI, build artifacts), I can expand it.
+
+## System requirements
+
+- Node.js 16+ and npm
 - Python 3.10+ and pip
-- PowerShell (examples below use PowerShell commands)
+- PowerShell (examples below use PowerShell)
 
-Optional but recommended: use a Python virtual environment for the backend (venv/conda) and a Node version manager (nvm/w) for Node.
+Recommended: use a Python virtual environment for the backend (venv or conda) and a Node version manager (nvm) for frontend work.
 
-## Quick start (recommended)
+## What this project provides (high level)
 
-Follow these steps to run the full stack locally (backend + frontend). Examples use PowerShell on Windows.
+- Habitability prediction: `HabitabilityPredictor` (random-forest, synthetic training data, lazy-trains on first request).
+- Planet classification: `PlanetClassifier` (random-forest, synthetic training data, returns type + probabilities).
+- Transit visualization: `TransitLightCurve` builds a simple light curve, adds noise, detects transits, and returns a base64 PNG + metrics.
+- REST endpoints: `/api/habitability`, `/api/classify`, `/api/transit/generate`, `/api/analyze`, `/api/health`.
 
-### 1) Backend (Flask)
+## Quick start — run locally (PowerShell)
 
-Open a PowerShell terminal and run:
+There are three easy ways to run the app locally: manual backend + frontend, or use the provided project-level starter scripts.
+
+1) Manual — backend then frontend
+
+Backend (Flask):
 
 ```powershell
 cd "d:\projects clone\TerraQuest\backend"
 
-# create & activate a venv (recommended)
+# create & activate a virtual environment (recommended)
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-# install Python deps
+# install Python dependencies
 pip install -r requirements.txt
 
-# run the API
+# run the API (development; debug True)
 python app.py
 ```
 
-By default the backend listens on http://localhost:5000. The root route returns a small JSON describing available endpoints.
+The backend will listen on http://localhost:5000. The root route (`/`) returns a small JSON blob listing endpoints.
 
-Notes:
-- If you see import errors, ensure the virtual environment is activated and you installed `requirements.txt` from `backend/`.
-- The backend uses `flask-cors` to allow requests from the frontend dev server.
-
-### 2) Frontend (React + TypeScript)
-
-Open a second PowerShell terminal and run:
+Frontend (React):
 
 ```powershell
 cd "d:\projects clone\TerraQuest\frontend"
 
-# install dependencies
-npm install # or `npm install --legacy-peer-deps` if you hit peer dependency errors
+# install npm deps
+npm install   # or `npm install --legacy-peer-deps` if you encounter peer dependency issues
 
-# start dev server
+# start development server
 npm start
 ```
 
-The dev server usually opens at http://localhost:3000. If port 3000 is busy it will offer an alternate port.
+The React dev server usually opens at http://localhost:3000 (or an alternate port if 3000 is busy).
 
-Build production bundle:
+2) Start scripts (convenience)
 
-```powershell
-npm run build
-```
+- `start_app.ps1` — starts backend and frontend in separate PowerShell windows.
+- `start_app.bat` — starts both using cmd windows on Windows.
+- `start_app.js` — Node-based starter that spawns the backend then frontend processes.
 
-Configuring the frontend API URL:
-- The frontend API client lives at `frontend/src/services/api.ts`. If you need to point the frontend to a non-default backend host/port (for example a remote API or Docker network), update the base URL there or provide an environment variable in your build workflow.
-
-### Start scripts (shortcut)
-
-This repo includes convenience start scripts at the project root:
-
-- `start_app.bat` — Windows batch wrapper to start services
-- `start_app.ps1` — PowerShell script to start backend + frontend
-- `start_app.js` — Node-based starter (project-specific)
-
-You can run the PowerShell script from the repo root:
+Run the PowerShell starter from repo root:
 
 ```powershell
 cd "d:\projects clone\TerraQuest"
 .\start_app.ps1
 ```
 
-Adjust the script if you need to change ports or virtual environment paths.
+3) Production build (frontend)
 
-## Project layout (high-level)
-
-```
-backend/
-  app.py                 # Flask app entry
-  config.py              # configuration helpers
-  requirements.txt       # Python dependencies
-  api/
-    routes.py            # Flask Blueprint for /api/* endpoints
-  models/
-    habitability_predictor.py
-    planet_classifier.py
-    transit_visualizer.py
-
-frontend/
-  package.json
-  public/
-    logo.png
-  src/
-    index.tsx
-    App.tsx
-    services/
-      api.ts              # API client used by components
-    components/           # React components & pages
+```powershell
+cd "d:\projects clone\TerraQuest\frontend"
+npm run build
 ```
 
-## Features
+The production `build/` output is placed in `frontend/build/` (ready for static hosting).
 
-- Dashboard for analyzing exoplanet parameters (radius, mass, orbital distance, star type)
-- Habitability prediction and planet classification models in `backend/models`
-- Transit visualization endpoint that returns an image (base64) rendered by the backend
-- React SPA with routing, Dashboard, About, Contact pages
+## Backend dependencies
 
-## Environment variables & configuration
+See `backend/requirements.txt`. Key packages used:
 
-- Backend: `backend/config.py` contains configuration helpers. You can set typical Flask env vars like `FLASK_ENV` or supply a `.env` loader if you prefer.
-- Frontend: edit `frontend/src/services/api.ts` or use your frontend build system to inject the API base URL for production builds.
+- Flask (web API)
+- flask-cors (CORS for local dev)
+- numpy, scipy (math/arrays)
+- scikit-learn (models)
+- matplotlib (plots for transit visualizer; Agg backend used)
 
-If you'd like, I can add a sample `.env` and small loader for both backend and frontend.
+Install them with:
 
-## Troubleshooting
+```powershell
+pip install -r backend\requirements.txt
+```
 
-- npm install fails with peer dependency errors: run `npm install --legacy-peer-deps`.
-- Backend import errors: ensure the virtual environment is activated and `pip install -r requirements.txt` completed without errors.
-- Frontend can't reach backend: confirm backend is running on port 5000 and that `frontend/src/services/api.ts` points to the right host; CORS must be enabled on the backend (already included).
-- If the frontend dev server starts on a different port, follow the URL printed in the terminal.
+## API — endpoints & examples
 
-## Tests & linting
+Available endpoints (registered under blueprint at `/api`):
 
-There are no automated tests included in the repository by default. Recommended next steps (low-effort improvements):
+- GET /api/health — basic health check
+- POST /api/habitability — predict habitability
+- POST /api/classify — classify planet type
+- POST /api/transit/generate — generate a sample transit image (base64 PNG + metrics)
+- POST /api/analyze — run habitability + classification together
 
-- Add basic unit tests for model functions in `backend/models` (pytest)
-- Add linting for frontend (ESLint + Prettier) and backend (flake8/ruff)
+Example: habitability (PowerShell / Invoke-RestMethod)
 
-If you want, I can scaffold a CI GitHub Actions workflow to run lint & build on push.
+```powershell
+Invoke-RestMethod -Method POST -Uri http://localhost:5000/api/habitability -ContentType 'application/json' -Body (
+  @{
+    radius = 1.0
+    orbit = 1.0
+    starType = 'G'
+    starMass = 1.0
+    starTemp = 5778
+  } | ConvertTo-Json
+)
+```
+
+Example: classify (using curl)
+
+```powershell
+curl -X POST http://localhost:5000/api/classify -H "Content-Type: application/json" -d '{"radius":1.0,"mass":1.0,"orbit":1.0}'
+```
+
+Transit generation returns a JSON with `image` (base64 PNG), `depth` and `transits_detected`.
+
+Note: the frontend client is configured in `frontend/src/services/api.ts` to talk to `http://localhost:5000/api` by default.
+
+## Developer notes — model behaviour & performance
+
+- The models (`HabitabilityPredictor`, `PlanetClassifier`) create synthetic training data and train in-memory. They lazy-train on first call to `predict()`/`classify()` if not already trained. Expect the first request to take longer while training.
+- The transit visualizer (`TransitLightCurve`) uses a simple hand-rolled transit model (matplotlib + SciPy). It returns base64 PNGs from the server; the frontend decodes and displays them.
+- These models are intended for prototyping and demo purposes, not production-grade scientific accuracy. Use them as a starting point and replace with trained models or saved model artifacts if desired.
+
+## Testing & linting (suggested)
+
+- Add pytest tests for functions in `backend/models/` (happy path + edge cases).
+- Frontend: add ESLint + Prettier configuration.
+- CI: add a GitHub Actions workflow to run Python tests and build the frontend on push.
+
+## Docker / containerization (optional next step)
+
+I can add a minimal `Dockerfile` for the backend and a `docker-compose.yml` to bring up frontend (as static build) + backend together. Tell me if you want a dev-oriented compose (with volumes) or a production-oriented compose.
+
+## Troubleshooting & tips
+
+- If `npm install` errors with peer deps: run `npm install --legacy-peer-deps`.
+- If backend imports fail: confirm the virtual environment is active and `pip install -r requirements.txt` completed.
+- If the frontend cannot reach the backend: ensure backend is running on `localhost:5000` and that CORS is enabled.
+- If transit images don't render or matplotlib errors occur: ensure the Python environment has `matplotlib` and that the server can use the Agg backend (the code sets Agg explicitly).
 
 ## Contributing
 
-- Small, focused PRs are welcome. Prioritize readability and tests for model logic.
-- Follow conventional commits or a simple changelog for releases.
+- Open a PR with a focused change. Add tests for model logic when updating model code.
+- Consider adding saved model artifacts and a training script if you want deterministic model behaviour across runs.
 
 ## License & credits
 
-This repository was created for a hackathon/demo. Update the license and credits as needed for your project.
+This project was built as a hackathon/demo. The repository currently includes a top-level `LICENSE` file. Update license and credits as appropriate for your usage.
 
 ---
 
-If you'd like, I can also:
+Want me to add one of the following now?
 
-- Add a sample `.env` and small loader for backend & frontend
-- Add a minimal Dockerfile + docker-compose to run frontend + backend together
-- Add CI (GitHub Actions) to run linting and build steps
+- Sample `.env` files and a small loader for backend & frontend (with examples)
+- Dockerfile + `docker-compose.yml` for local dev or production
+- GitHub Actions workflow for linting/tests and frontend build
+- Basic pytest tests for `backend/models`
 
-Tell me which of those you'd like next and I will add it.
+Tell me which item you'd like next and I'll implement it.
+
