@@ -1,0 +1,9 @@
+{
+  "name": "nasa-exoplanet-hackathon-launcher",
+  "version": "1.0.0",
+  "description": "Single command launcher for NASA Exoplanet Hackathon app",
+  "scripts": {
+    "start": "node start_app.js"
+  },
+  "main": "start_app.js"
+}
